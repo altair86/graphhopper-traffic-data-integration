@@ -1,5 +1,9 @@
 package com.graphhopper.traffic.demo;
 
+import com.bedatadriven.jackson.datatype.jts.JtsModule;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.util.ISO8601DateFormat;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -9,6 +13,10 @@ import com.graphhopper.http.GHServer;
 import com.graphhopper.http.GraphHopperServletModule;
 import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.Helper;
+
+import java.util.ArrayList;
+import java.util.List;
+
 import javax.inject.Singleton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,7 +48,27 @@ public class DemoServer {
     public void start(Injector injector) throws Exception {
         server = new GHServer(cmdArgs);
         server.start(injector);
-        logger.info("Memory utilization:" + Helper.getMemInfo() + ", " + cmdArgs.get("graph.flagEncoders", ""));
+        logger.info("Memory utilization: " + Helper.getMemInfo() + ", " + cmdArgs.get("graph.flagEncoders", ""));
+        
+        ObjectMapper mapper = new ObjectMapper();
+        //.enable(SerializationFeature.INDENT_OUTPUT);
+        mapper.setDateFormat(new ISO8601DateFormat());
+        mapper.registerModule(new JtsModule());
+        RoadData roadData = new RoadData();
+        
+        List < Point > progLangs = new ArrayList < > ();
+        progLangs.add(new Point(1,2));
+        progLangs.add(new Point(3,4));
+        
+        RoadEntry roadEntry = new RoadEntry();
+        roadEntry.setId("abc");
+        roadEntry.setPoints(progLangs);
+        roadData.add(roadEntry);
+        
+        String json = mapper.writeValueAsString(roadData);
+
+        // Print json
+        logger.info(json);
     }
 
     /**

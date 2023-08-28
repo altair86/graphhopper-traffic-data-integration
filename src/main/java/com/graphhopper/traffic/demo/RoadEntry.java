@@ -2,14 +2,18 @@ package com.graphhopper.traffic.demo;
 
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 /**
  *
  * @author Peter Karich
  */
 public class RoadEntry {
-
+	
+	@JsonProperty("points")
     private List<Point> points;
-    private double value;
+    
+	private double value;
     private String valueType;
     private String mode;
     private String id;

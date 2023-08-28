@@ -1,0 +1,26 @@
+[
+	{
+		"value":4,
+		"valueType":"speed",
+		"mode":"replace",
+		"id":"1",
+		"points":[
+			{
+				"lon": 82.61290,
+				"lat": 49.92847
+			}
+		]
+	},
+	{
+		"value":4,
+		"valueType":"speed",
+		"mode":"replace",
+		"id":"2",
+		"points":[
+			{
+				"lon": 82.627331, 
+				"lat": 49.906561
+			}
+		]
+	}
+]
