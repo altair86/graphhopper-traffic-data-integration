@@ -1,8 +1,8 @@
 cd /home/x211/graphhopper-traffic-data-integration
 
-wget -O https://download.geofabrik.de/asia/kazakhstan-latest.osm.pbf
+wget -O map.osm.pbf https://download.geofabrik.de/asia/kazakhstan-latest.osm.pbf
 
-nohup ./td.sh datasource=kazakhstan-latest.osm.pbf &
+nohup ./td.sh datasource=map.osm.pbf &
 
 
 ### #Подгрузка данных трафика с 131
