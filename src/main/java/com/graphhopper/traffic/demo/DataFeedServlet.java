@@ -25,6 +25,6 @@ public class DataFeedServlet extends GraphHopperServlet {
         RoadData data = mapper.readValue(req.getInputStream(), RoadData.class);
         System.out.println("data:" + data);
 
-        updater.feed(data);
+        updater.feed(data, true);
     }
 }

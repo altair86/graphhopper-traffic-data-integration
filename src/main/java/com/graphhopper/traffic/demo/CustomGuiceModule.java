@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.util.Iterator;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.logging.Level;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,7 +29,6 @@ import org.slf4j.LoggerFactory;
  */
 public class CustomGuiceModule extends GraphHopperModule {
 
-    private final Logger logger = LoggerFactory.getLogger(getClass());
     private final ReadWriteLock lock = new ReentrantReadWriteLock();
 
     public CustomGuiceModule(CmdArgs args) {
@@ -42,7 +42,22 @@ public class CustomGuiceModule extends GraphHopperModule {
         final DataUpdater updater = new DataUpdater(lock.writeLock());
         bind(DataUpdater.class).toInstance(updater);
         // start update thread
-        updater.start();
+        //TODO disable auto fetching new data, because I dont need it
+        //updater.start();
+        
+        //Try to load Log History LL from files
+        //There is ThreadSleep because Graphhopper now not ready
+        new Thread("loadLogHistoryLL") {
+            @Override
+            public void run() {
+                try {
+                    Thread.sleep(2500);
+                } catch (InterruptedException ex) {
+                    java.util.logging.Logger.getLogger(CustomGuiceModule.class.getName()).log(Level.SEVERE, null, ex);
+                }
+               updater.loadLogHistoryLL();
+            }            
+        }.start();
         
         ObjectMapper prettyOM = createMapper();
         prettyOM.enable(SerializationFeature.INDENT_OUTPUT);

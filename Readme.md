@@ -43,9 +43,9 @@ The data format is very generic and can be used for other information influencin
 ```json
 [{
    "id": "1",
-   "points": [[6.827273, 51.190264]],
+   "points": [{"lon":82.60893666666668,"lat":49.897884999999995}],
    "value": 10,
-   "value_type": "speed",
+   "valueType": "speed",
    "mode": "REPLACE"
 }, {
    "id": "somethingelse",

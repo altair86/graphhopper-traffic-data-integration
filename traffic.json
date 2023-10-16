@@ -1,15 +1,26 @@
 [
 	{
-		"id": "1",
-        "points": [{"lon": 6.827273, "lat": 51.190264}],
-        "value": 10,
-        "value_type": "speed",
-        "mode": "REPLACE"
-    }, {
-        "id": "123",
-        "points": [{"lon": 6.777964, "lat": 51.192927}],
-        "value": 10,
-        "value_type": "speed",
-        "mode": "REPLACE"
-    }
+		"value":4,
+		"valueType":"speed",
+		"mode":"replace",
+		"id":"1",
+		"points":[
+			{
+				"lon": 82.61290,
+				"lat": 49.92847
+			}
+		]
+	},
+	{
+		"value":4,
+		"valueType":"speed",
+		"mode":"replace",
+		"id":"2",
+		"points":[
+			{
+				"lon": 82.627331, 
+				"lat": 49.906561
+			}
+		]
+	}
 ]

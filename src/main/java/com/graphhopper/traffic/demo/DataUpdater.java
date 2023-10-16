@@ -13,9 +13,13 @@ import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.EdgeIteratorState;
 import gnu.trove.set.hash.TIntHashSet;
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Scanner;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Lock;
@@ -39,28 +43,115 @@ public class DataUpdater {
     private ObjectMapper objectMapper;
 
     private final OkHttpClient client;
+    
     private final Logger logger = LoggerFactory.getLogger(getClass());
+    private final java.util.logging.Logger loggerHistoryLL = java.util.logging.Logger.getLogger("HistoryLL");  
+    
     private final Lock writeLock;
     private final long seconds = 150;
     private RoadData currentRoads;
+    java.util.logging.FileHandler fh;  
 
+    /**
+     *
+     * @param writeLock
+     */
     public DataUpdater(Lock writeLock) {
+    	
         this.writeLock = writeLock;
         client = new OkHttpClient.Builder().connectTimeout(5, TimeUnit.SECONDS).build();
+        
+        try {
+            fh = new java.util.logging.FileHandler("log_history_ll/points.log", 999, 25, true);
+            
+            loggerHistoryLL.addHandler(fh);
+
+            FormatterForLL formatter = new FormatterForLL();
+            fh.setFormatter(formatter);
+        } catch (FileNotFoundException e) {
+        } catch (SecurityException | IOException e) {
+            e.printStackTrace();
+        }
+    }
+    
+    public void loadLogHistoryLL() {
+        List<String> fileNames = new ArrayList<String>();
+        
+        try {
+            File folder = new File("log_history_ll");
+            if (folder.exists()) {
+                for (final File fileEntry : folder.listFiles()) {
+                    if (!fileEntry.isDirectory()) {
+                        String fileName = fileEntry.getName();
+                        if (fileName.contains("points.log.") && !fileName.contains("lck")) {
+                            logger.info(fileEntry.getName());
+                            fileNames.add(fileName);
+                        }
+                    }
+                }
+            }
+
+            Collections.sort(fileNames, (String o1, String o2) -> {
+                int i = Integer.valueOf(o1.replace("points.log.", ""))
+                        .compareTo(Integer.valueOf(o2.replace("points.log.", "")));
+                if (i != 0) return -i;
+
+                return 0;   
+            });
+        } 
+        catch(Exception e) {
+              e.printStackTrace();
+        }
+        
+        logger.info("loading fileNames: " + fileNames);
+        
+        for (String fn : fileNames) {
+            try {
+                Scanner in = new Scanner(new File("log_history_ll/" + fn));
+
+                while (in.hasNextLine()) {
+                    String line = in.nextLine();
+
+                    String[] data = line.split(" ");
+                    if (data.length == 3) {
+                        List<Point> points = new ArrayList<Point>();
+                        points.add(
+                                                                new Point(Double.parseDouble(data[0]),
+                                                                            Double.parseDouble(data[1]))
+                                        );
+                        RoadData rd = new RoadData();
+                        rd.add(new RoadEntry("1", 
+                                        points, 
+                                        Double.parseDouble(data[2]),
+                                        "speed",
+                                        "replace")
+                                );
+                        feed(rd, false);
+                    }
+                }
+            }
+            catch(FileNotFoundException e){
+                e.printStackTrace();
+            }
+            catch(Exception e) {
+                  e.printStackTrace();
+            }
+        }
     }
 
-    public void feed(RoadData data) {
+    public void feed(RoadData data, boolean saveHistory) {
         writeLock.lock();
         try {
-            lockedFeed(data);
+            lockedFeed(data, saveHistory);
         } finally {
             writeLock.unlock();
         }
     }
 
-    private void lockedFeed(RoadData data) {
+    private void lockedFeed(RoadData data, boolean saveHistory) {
         currentRoads = data;
         Graph graph = hopper.getGraphHopperStorage();
+        
         FlagEncoder carEncoder = hopper.getEncodingManager().getEncoder("car");
         LocationIndex locationIndex = hopper.getLocationIndex();
 
@@ -95,6 +186,9 @@ public class DataUpdater {
                         updates++;
                         // TODO use different speed for the different directions (see e.g. Bike2WeightFlagEncoder)
                         logger.info("Speed change at " + entry.getId() + " (" + point + "). Old: " + oldSpeed + ", new:" + value);
+                        if (saveHistory) {
+                            saveHistoryLL(point.lat, point.lon, value);
+                        }
                         edge.setFlags(carEncoder.setSpeed(edge.getFlags(), value));
                     }
                 } else {
@@ -108,6 +202,25 @@ public class DataUpdater {
         logger.info("Updated " + updates + " street elements of " + data.size() + ". Unchanged:" + (data.size() - updates) + ", errors:" + errors);
     }
 
+    /*
+     * Save history about points of traffic 
+     * @param lat
+     * @param lon
+     * @param spd 
+     */
+     public void saveHistoryLL(double lat, double lon, double spd) {
+        new Thread("saveHistoryLL" + lat + lon) {
+            @Override
+            public void run() {
+                try {
+                    loggerHistoryLL.info(lat + " " + lon + " " + spd );
+                } catch (Exception ex) {
+                    logger.error("Problem while saveHistoryLL", ex);
+                }
+            }
+        }.start();
+    }
+     
     protected String fetchJSONString(String url) throws IOException {
         Request okRequest = new Request.Builder().url(url).build();
         return client.newCall(okRequest).execute().body().string();
@@ -173,7 +286,7 @@ public class DataUpdater {
                     try {
                         logger.info("fetch new data");
                         RoadData data = fetchTrafficData(ROAD_DATA_URL);
-                        feed(data);
+                        feed(data, true);
                         try {
                             Thread.sleep(seconds * 1000);
                         } catch (InterruptedException ex) {
