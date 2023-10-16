@@ -62,7 +62,8 @@ public class DataUpdater {
         client = new OkHttpClient.Builder().connectTimeout(5, TimeUnit.SECONDS).build();
         
         try {
-            fh = new java.util.logging.FileHandler("log_history_ll/points.log", 999, 25, true);
+            // 10 files on 100 kB - its about 30,000 poinst with speed
+            fh = new java.util.logging.FileHandler("log_history_ll/points.log", 100000, 10, true);
             
             loggerHistoryLL.addHandler(fh);
 
