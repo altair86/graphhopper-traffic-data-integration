@@ -1,6 +1,6 @@
 FROM openjdk:19
 
-ADD ./target/traffic-demo-0.8.2-SNAPSHOT-web-assembly.jar ./target/traffic-demo-0.8.2-SNAPSHOT-web-assembly.jar
+ADD ./target/traffic-demo-0.8.3-SNAPSHOT-web-assembly.jar ./target/traffic-demo-0.8.3-SNAPSHOT-web-assembly.jar
 ADD td.sh td.sh
 ADD config.properties config.properties
 
