@@ -7,4 +7,4 @@ ADD config.properties config.properties
 RUN mkdir /data && mkdir /log_history_ll
 
 
-CMD ls /data && ./td.sh datasource=/data/map.osm.pbf
+CMD ./td.sh datasource=/data/map.osm.pbf
